@@ -1,6 +1,14 @@
+<<<<<<< HEAD
 fastapi
 uvicorn
 joblib
 scikit-learn
 pandas
+=======
+fastapi
+uvicorn
+joblib
+scikit-learn
+pandas
+>>>>>>> 0a834268c06e9f0a304d64e8890794f54a5c9784
 numpy
