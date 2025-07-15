@@ -33,7 +33,7 @@ app.add_middleware(
 
 @app.get("/")
 def read_root():
-    return {"message": "Health Risk Predictor API is running."}
+    return {"message": "My custom health risk API — Kah Yee"}
 
 @app.post("/predict")
 def predict_risk(data: HealthInput):
