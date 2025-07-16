@@ -41,12 +41,21 @@ def predict_risk(data: HealthInput):
         data.Pregnancies, data.Glucose, data.BloodPressure, data.SkinThickness,
         data.Insulin, data.BMI, data.DiabetesPedigreeFunction, data.Age
     ]])
-    
-    prediction = model.predict(features)[0]
+
+    # Get predicted probability of class 1 (diabetes)
+    proba = model.predict_proba(features)[0][1]  # confidence of positive class
+
+    if proba >= 0.7:
+        risk_level = "high"
+    elif proba >= 0.4:
+        risk_level = "moderate"
+    else:
+        risk_level = "low"
 
     return {
-        "risk": "high" if prediction == 1 else "low",
-        "prediction_raw": int(prediction)
+        "risk": risk_level,
+        "confidence": round(proba, 2),
+        "prediction_raw": int(model.predict(features)[0])
     }
 
 @app.options("/predict")
