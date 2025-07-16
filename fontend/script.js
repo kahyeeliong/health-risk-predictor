@@ -26,22 +26,35 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const result = await response.json();
+      console.log("Result:", result);
 
-      // Color and display result
-      let color = '';
-      if (result.risk === 'high') color = 'red';
-      else if (result.risk === 'moderate') color = 'orange';
-      else color = 'green';
+      // Update risk level text
+      riskText.innerText = `Risk Level: ${result.risk.toUpperCase()}`;
+      
+      // Update confidence text
+      if (result.confidence !== undefined) {
+        confidenceText.innerText = `Confidence: ${(result.confidence * 100).toFixed(1)}%`;
+      } else {
+        confidenceText.innerText = '';
+      }
 
-      resultDiv.innerHTML = `
-        <strong>Risk Level:</strong> <span style="color: ${color}; font-weight: 600;">${result.risk.toUpperCase()}</span><br>
-        <strong>Confidence:</strong> ${(result.confidence * 100).toFixed(1)}%
-      `;
+      // Reset circle class
+      riskCircle.className = 'circle';
+
+      // Apply color class based on risk
+      if (result.risk === 'low') {
+        riskCircle.classList.add('low');
+      } else if (result.risk === 'moderate') {
+        riskCircle.classList.add('moderate');
+      } else if (result.risk === 'high') {
+        riskCircle.classList.add('high');
+      }
 
     } catch (error) {
       console.error('Error:', error);
-      resultDiv.innerText = 'Something went wrong. Please try again.';
-      resultDiv.style.color = 'orange';
+      riskText.innerText = 'Something went wrong.';
+      riskCircle.className = 'circle';
+      confidenceText.innerText = '';
     }
   });
 });
