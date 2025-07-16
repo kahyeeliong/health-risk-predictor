@@ -10,7 +10,7 @@ columns = ["Pregnancies", "Glucose", "BloodPressure", "SkinThickness",
 
 df = pandas.read_csv(url, names=columns)
 # removes the "Outcome" column in dataframe
-X = df.drop("Outcome", axis=1)
+X = df.drop("Outcome", axis=1).values
 y = df["Outcome"]
 
 # test_size=0.2 - 20% of the data goes to testing, 80% to training
