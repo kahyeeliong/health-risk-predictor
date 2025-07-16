@@ -26,8 +26,17 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const result = await response.json();
-      resultDiv.innerText = `Risk Level: ${result.risk}`;
-      resultDiv.style.color = result.risk === 'high' ? 'red' : 'green';
+
+      // Color and display result
+      let color = '';
+      if (result.risk === 'high') color = 'red';
+      else if (result.risk === 'moderate') color = 'orange';
+      else color = 'green';
+
+      resultDiv.innerHTML = `
+        <strong>Risk Level:</strong> <span style="color: ${color}; font-weight: 600;">${result.risk.toUpperCase()}</span><br>
+        <strong>Confidence:</strong> ${(result.confidence * 100).toFixed(1)}%
+      `;
 
     } catch (error) {
       console.error('Error:', error);
