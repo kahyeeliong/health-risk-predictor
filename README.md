@@ -11,6 +11,9 @@ This is a beginner-friendly machine learning API that predicts diabetes risk bas
 - Returns model confidence score
 - Includes an interactive Swagger UI for testing
 
+# HTML Website
+http://127.0.0.1:5500/fontend/index.html
+
 # Project Status
 
 - This is an ongoing project
