@@ -1,0 +1,55 @@
+{
+  "model": "Logistic regression",
+  "dataset": {
+    "patients": 768,
+    "diabetic_share": 0.349,
+    "train": 614,
+    "test": 154
+  },
+  "cross_validation": {
+    "Logistic regression": {
+      "roc_auc": 0.843,
+      "roc_auc_std": 0.019,
+      "accuracy": 0.788
+    },
+    "Random forest": {
+      "roc_auc": 0.834,
+      "roc_auc_std": 0.021,
+      "accuracy": 0.767
+    }
+  },
+  "test": {
+    "at_0.5": {
+      "roc_auc": 0.813,
+      "accuracy": 0.708,
+      "precision": 0.6,
+      "recall": 0.5,
+      "f1": 0.545
+    },
+    "flag_moderate_or_high_at_0.3": {
+      "roc_auc": 0.813,
+      "accuracy": 0.74,
+      "precision": 0.597,
+      "recall": 0.796,
+      "f1": 0.683
+    }
+  },
+  "baseline_original_version_test_at_0.5": {
+    "roc_auc": 0.812,
+    "accuracy": 0.76,
+    "precision": 0.681,
+    "recall": 0.593,
+    "f1": 0.634
+  },
+  "coefficients": {
+    "Pregnancies": 0.377,
+    "Glucose": 1.183,
+    "BloodPressure": -0.044,
+    "SkinThickness": 0.028,
+    "Insulin": -0.066,
+    "BMI": 0.689,
+    "DiabetesPedigreeFunction": 0.233,
+    "Age": 0.148
+  },
+  "sklearn_version": "1.9.1"
+}

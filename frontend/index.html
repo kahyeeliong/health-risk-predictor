@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Health Risk Predictor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>Health Risk Predictor</h1>
+      <p>Estimate diabetes risk from routine health measurements, and see which ones drive the result.</p>
+    </header>
+
+    <main class="main-grid">
+      <form id="riskForm" class="card" novalidate>
+        <div class="examples">
+          <span>Try an example:</span>
+          <button type="button" class="chip" data-example="low">Low risk</button>
+          <button type="button" class="chip" data-example="high">High risk</button>
+        </div>
+
+        <div class="fields">
+          <label>Glucose <small>mg/dL</small>
+            <input type="number" name="Glucose" min="40" max="400" required />
+          </label>
+          <label>BMI <small>kg/m²</small>
+            <input type="number" name="BMI" step="0.1" min="10" max="80" required />
+          </label>
+          <label>Age <small>years</small>
+            <input type="number" name="Age" min="18" max="120" required />
+          </label>
+          <label>Pregnancies
+            <input type="number" name="Pregnancies" min="0" max="20" required />
+          </label>
+          <label>Blood pressure <small>mm Hg · optional</small>
+            <input type="number" name="BloodPressure" min="20" max="200" />
+          </label>
+          <label>Family history score <small>0 to 3 · optional</small>
+            <input type="number" name="DiabetesPedigreeFunction" step="0.01" min="0" max="3" />
+          </label>
+          <label>Insulin <small>μU/mL · optional</small>
+            <input type="number" name="Insulin" min="1" max="1000" />
+          </label>
+          <label>Skin thickness <small>mm · optional</small>
+            <input type="number" name="SkinThickness" min="1" max="100" />
+          </label>
+        </div>
+
+        <p class="hint">Leave optional fields blank if you don't know them. The model fills them with a typical value.</p>
+        <button type="submit" id="submitBtn">Predict risk</button>
+      </form>
+
+      <section id="result" class="card result-card" aria-live="polite">
+        <div id="placeholder" class="placeholder">
+          <div class="placeholder-icon">🩺</div>
+          <p>Fill in the form or try an example to see the prediction.</p>
+        </div>
+
+        <div id="output" hidden>
+          <div class="risk-status">
+            <span class="circle" id="riskCircle"></span>
+            <span id="riskText"></span>
+          </div>
+
+          <div class="meter" aria-hidden="true">
+            <div class="meter-bands">
+              <span class="band low"></span><span class="band moderate"></span><span class="band high"></span>
+            </div>
+            <div class="meter-marker" id="meterMarker"></div>
+          </div>
+          <div class="meter-labels"><span>0%</span><span>30%</span><span>60%</span><span>100%</span></div>
+
+          <p id="probabilityText" class="probability"></p>
+
+          <h3>What drove this result</h3>
+          <ul id="factors" class="factors"></ul>
+        </div>
+
+        <p id="error" class="error" hidden></p>
+      </section>
+    </main>
+
+    <p class="disclaimer">
+      For learning and demonstration only. Not a medical device and not medical advice.
+      Trained on a small public dataset of 768 Pima Indian women, so results may not apply to other groups.
+    </p>
+
+    <footer>
+      <p>Built by Liong Kah Yee · <a href="/docs">API docs</a> · <a href="https://github.com/kahyeeliong/health-risk-predictor">Source</a></p>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
