@@ -157,6 +157,11 @@ render.yaml         Settings for hosting the app on Render
 - Check that a "30% chance" really means about 30 out of 100 people.
 - Try a stronger model and compare it fairly with this simple one.
 
+## How I built this
+
+- **First version (2025):** I built it myself: a random forest model, a FastAPI API and the web page.
+- **This version (October 2026):** I used Claude (an AI assistant made by Anthropic) as a coding assistant to improve it. Together we fixed how the data is cleaned, tested the model more fairly, picked a model that can explain its results, tuned it to catch more real cases, redesigned the web page, put it live and added automatic tests. Commits made with Claude's help show it as a co-author.
+
 ## About
 
 Built by Liong Kah Yee to learn the full journey from a dataset to a working product: cleaning data, choosing a model, testing it honestly, putting it behind an API, and making a page people can use. The idea was inspired by another creator's project; this version is built from scratch.
