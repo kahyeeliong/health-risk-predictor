@@ -13,11 +13,13 @@ from typing import Optional
 import joblib
 import numpy as np
 import pandas as pd
+import sklearn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from app import train_model
 from app.features import FEATURES, LABELS, ZERO_MEANS_MISSING, risk_band
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -25,11 +27,20 @@ MODEL_PATH = ROOT / "app" / "model.joblib"
 METRICS_PATH = ROOT / "app" / "metrics.json"
 FRONTEND_DIR = ROOT / "frontend"
 
-if not MODEL_PATH.exists():
-    raise RuntimeError("No trained model found. Run `python -m app.train_model` first.")
+def load_model():
+    """Load the saved model. If it's missing, or was saved with a different
+    scikit-learn version than the one installed here (common on a new server),
+    retrain it first. Training takes about a second."""
+    saved_version = None
+    if METRICS_PATH.exists():
+        saved_version = json.loads(METRICS_PATH.read_text()).get("sklearn_version")
+    if not MODEL_PATH.exists() or saved_version != sklearn.__version__:
+        print("Model missing or built with another scikit-learn version. Retraining...")
+        train_model.main()
+    return joblib.load(MODEL_PATH), json.loads(METRICS_PATH.read_text())
 
-model = joblib.load(MODEL_PATH)
-metrics = json.loads(METRICS_PATH.read_text()) if METRICS_PATH.exists() else {}
+
+model, metrics = load_model()
 
 # Pieces of the pipeline, used to explain each prediction.
 imputer, scaler, classifier = model[0], model[1], model[-1]

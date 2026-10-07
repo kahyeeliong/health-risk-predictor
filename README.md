@@ -1,99 +1,106 @@
 # Health Risk Predictor
 
-A small end-to-end ML app that estimates a person's risk of diabetes from 8 routine health measurements and explains which measurements drove the result. It's a trained scikit-learn model served through a FastAPI REST API, with a simple web page on top.
+[![Tests](https://github.com/kahyeeliong/health-risk-predictor/actions/workflows/tests.yml/badge.svg)](https://github.com/kahyeeliong/health-risk-predictor/actions/workflows/tests.yml)
 
-![Web app showing a high-risk prediction and the factors behind it](docs/screenshot.png)
+**Try it live: LIVE_URL**
 
-## The problem
+A web app that guesses how likely someone is to have diabetes, based on 8 simple health numbers (like glucose, BMI and age). It also shows *which* numbers pushed the risk up or down, so the result isn't a black box.
 
-Type 2 diabetes is common and often goes unnoticed for years. A quick screening step that flags people worth sending for a proper blood test could help catch it earlier. This project asks: **given a few standard measurements, how well can a simple model flag who is likely to have diabetes, and can it say why?**
+Built with Python. The model is made with scikit-learn, the API with FastAPI, and the web page with plain HTML, CSS and JavaScript.
 
-For a screening tool, missing a real case is worse than a false alarm (a false alarm just means an extra test), so I tuned the risk bands to catch as many real cases as reasonable.
+![The web app showing a high-risk result and the reasons behind it](docs/screenshot.png)
 
-## Data
+## Why I built it
 
-[Pima Indians Diabetes dataset](https://www.kaggle.com/datasets/uciml/pima-indians-diabetes-database), originally from the US National Institute of Diabetes and Digestive and Kidney Diseases. A copy is in `data/`.
+Diabetes is common, and many people have it for years without knowing. A quick check that says "you should get a proper blood test" could help people find out earlier.
 
-- 768 women aged 21+, of Pima Indian heritage. 35% have diabetes.
-- Features: pregnancies, glucose, blood pressure, skin thickness, insulin, BMI, a family history score (diabetes pedigree function), age.
-- **Data quality issue:** several columns use `0` for "not measured". 374 of 768 insulin values and 227 skin thickness values are 0, and 35 people have a blood pressure of 0, 11 a BMI of 0 and 5 a glucose of 0. These are treated as missing and filled with the training median, rather than fed to the model as real readings.
+So the question is: **with a few health numbers, can a simple model spot people who likely have diabetes, and explain why?**
 
-## Approach
+For a check like this, missing someone who really has diabetes is worse than a false alarm. A false alarm just means one extra test. So I set the app up to catch as many real cases as possible.
 
-1. Replace impossible zeros with missing values, then fill with the median (`SimpleImputer`).
-2. Hold out 20% of patients as a test set, stratified so both sets have the same share of diabetic patients. The test set is only used once, at the end.
-3. Compare models with 5-fold cross-validation on the training set:
+## The data
 
-   | Model | CV ROC AUC |
-   |---|---|
-   | Logistic regression | 0.843 (± 0.019) |
-   | Random forest (300 trees) | 0.834 (± 0.021) |
+The [Pima Indians Diabetes dataset](https://www.kaggle.com/datasets/uciml/pima-indians-diabetes-database), a well-known public dataset from the US National Institute of Diabetes and Digestive and Kidney Diseases. A copy is in the `data/` folder.
 
-4. **Pick logistic regression.** It scores as well as the random forest, and it's interpretable: each prediction can be broken down into how much each measurement pushed the risk up or down. For a health use case, being able to explain a result matters.
-5. Turn the predicted probability into risk bands: **low** (< 30%), **moderate** (30 to 60%), **high** (60%+).
+- 768 women aged 21 and over. About 1 in 3 have diabetes.
+- 8 health numbers per person: pregnancies, glucose, blood pressure, skin thickness, insulin, BMI, family history score and age.
+- **A problem I found:** the dataset uses `0` to mean "not measured". Almost half the insulin values are 0, and some people even have a BMI of 0, which is impossible. If you feed those zeros to the model, it treats them as real readings and learns wrong patterns. So I mark them as "missing" and fill them in with a typical value (the middle value of everyone else, called the median).
 
-Training code: [`app/train_model.py`](app/train_model.py). All numbers are saved to [`app/metrics.json`](app/metrics.json).
+## How it works
+
+1. **Clean the data.** Turn the fake zeros into "missing" and fill them in.
+2. **Keep some data aside for the final test.** 20% of people are hidden from the model while it learns. At the end, the model is tested on them once, like a final exam it hasn't seen.
+3. **Try two models and compare them fairly.** I tried a random forest (many decision trees voting) and logistic regression (a simple formula that adds up each number's effect). To compare them I used cross-validation: split the learning data into 5 parts, train on 4, test on the 1 left out, and repeat 5 times. Both scored about the same.
+4. **Pick logistic regression.** Same score, but much easier to explain. You can see exactly how much each number adds to the risk. For anything health-related, being able to explain the result matters.
+5. **Turn the result into 3 levels:** **low** (under 30%), **moderate** (30 to 60%) and **high** (60% and above).
 
 ## Results
 
-Held-out test set (154 patients):
+On the 154 people the model never saw while learning:
 
-| Version | Flags a patient when | ROC AUC | Accuracy | Precision | Recall |
+| Version | Says "at risk" when | Overall score (AUC) | Correct overall | Of those flagged, really had diabetes | Of those with diabetes, how many it caught |
 |---|---|---|---|---|---|
-| Original version (random forest, zeros left in) | probability ≥ 50% | 0.81 | 0.76 | 0.68 | 0.59 |
-| Current model | probability ≥ 50% | 0.81 | 0.71 | 0.60 | 0.50 |
-| **Current model, as used in the app** | **risk is moderate or high (≥ 30%)** | **0.81** | **0.74** | **0.60** | **0.80** |
+| My first version | chance is 50%+ | 0.81 | 76% | 68% | 59% |
+| This version | chance is 50%+ | 0.81 | 71% | 60% | 50% |
+| **This version, as used in the app** | **risk is moderate or high (30%+)** | **0.81** | **74%** | **60%** | **80%** |
 
-What this shows:
+**What the terms mean**
+- **Overall score (AUC):** how well the model ranks people who have diabetes above people who don't, from 0.5 (coin flip) to 1.0 (perfect).
+- **Of those flagged, really had diabetes** is called *precision*. **Of those with diabetes, how many it caught** is called *recall*.
 
-- **Overall ranking ability (ROC AUC) is the same, about 0.81**, for both versions. This dataset is small and the strongest signal is glucose, so model choice doesn't move the needle much.
-- The real gain is in how the model is used. Flagging moderate-or-high risk **catches 80% of diabetic patients, up from 59%** in the original version. The cost is more false alarms (precision 0.60 vs 0.68), which is the right trade for screening.
-- The test set is small (154 people), so these numbers can shift by a few points with a different split. The cross-validation scores above are the more stable estimate.
+**What this tells us**
+- The overall score is the same as my first version (about 0.81). The dataset is small, and glucose alone does most of the work, so a fancier model doesn't help much.
+- The real improvement is how the app uses the model. By flagging "moderate or high", it **now catches 80% of people with diabetes, up from 59%**. The cost is more false alarms, which is the right trade for a quick check.
+- 154 people is a small test, so these numbers could move a few points with different people. The cross-validation scores are steadier: 0.84 for logistic regression, 0.83 for random forest.
 
-**Biggest drivers** (standardised logistic regression coefficients): glucose (1.18) is by far the strongest, then BMI (0.69), pregnancies (0.38) and family history (0.23). Blood pressure, insulin and skin thickness add almost nothing once glucose and BMI are known.
+**What matters most:** glucose matters by far the most, then BMI, number of pregnancies and family history. Blood pressure, insulin and skin thickness add almost nothing once you know glucose and BMI.
 
-## How it explains a prediction
+## How it explains a result
 
-For logistic regression, the log-odds of diabetes is a sum of `coefficient × standardised value` for each feature. Each term is that feature's contribution compared with an average patient in the training data: positive raises risk, negative lowers it. The API returns these contributions sorted by size, and the web page shows the top four.
+Logistic regression works by adding up points. Each health number gives some points (plus or minus), depending on how far it is from an average person in the data. The total points become the risk percentage. So each number's points show how much it pushed the risk up or down. The web page shows the 4 biggest.
 
-## Run it locally
+## Try it on your own computer
 
-Needs Python 3.10+.
+You need Python 3.10 or newer.
 
 ```bash
 git clone https://github.com/kahyeeliong/health-risk-predictor.git
 cd health-risk-predictor
-python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+python -m venv .venv && source .venv/bin/activate   # on Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
 uvicorn app.app:app --reload
 ```
 
-Open http://127.0.0.1:8000 for the web app, or http://127.0.0.1:8000/docs for interactive API docs (Swagger).
+Then open http://127.0.0.1:8000 in your browser. For the API test page, open http://127.0.0.1:8000/docs.
 
-To retrain the model and regenerate the metrics (takes a few seconds):
-
-```bash
-python -m app.train_model
-```
-
-To run the tests:
+Other useful commands:
 
 ```bash
-pip install -r requirements-dev.txt
-pytest
+python -m app.train_model            # retrain the model (takes a few seconds)
+pip install -r requirements-dev.txt  # install test tools
+pytest                               # run the tests
 ```
 
-## API
+Or run it with Docker, without installing Python packages:
 
-| Method | Path | What it does |
-|---|---|---|
-| `POST` | `/predict` | Risk band, probability and per-feature explanation |
-| `GET` | `/model-info` | Model type, cross-validation and test metrics |
-| `GET` | `/health` | Health check |
-| `GET` | `/docs` | Swagger UI |
+```bash
+docker build -t health-risk-predictor .
+docker run -p 8000:8000 health-risk-predictor
+```
 
-Example request. Blood pressure, skin thickness, insulin and family history score are optional, since most people don't know them offhand.
+## The API
+
+The web page talks to the model through an API, and other apps can use it too.
+
+| Address | What it does |
+|---|---|
+| `POST /predict` | Send health numbers, get back the risk level, the chance, and the reasons |
+| `GET /model-info` | How the model was trained and how well it scored |
+| `GET /health` | Quick "are you running?" check |
+| `GET /docs` | A test page where you can try the API in your browser |
+
+Example. Blood pressure, skin thickness, insulin and family history score are optional, because most people don't know them.
 
 ```bash
 curl -X POST http://127.0.0.1:8000/predict \
@@ -101,7 +108,7 @@ curl -X POST http://127.0.0.1:8000/predict \
   -d '{"Pregnancies": 3, "Glucose": 175, "BloodPressure": 85, "BMI": 38.5, "DiabetesPedigreeFunction": 0.9, "Age": 50}'
 ```
 
-Response (shortened):
+Answer (shortened):
 
 ```json
 {
@@ -115,36 +122,41 @@ Response (shortened):
 }
 ```
 
-Inputs are validated (for example, BMI must be between 10 and 80), and impossible values get a clear `422` error.
+If you send an impossible number, like a BMI of 0, the API says no and explains what's wrong.
 
-## Project structure
+## Checks that run automatically
+
+Every time code is pushed to GitHub, GitHub runs the tests and also builds and starts the Docker version to make sure it works. The green "Tests" badge at the top means everything passed.
+
+## What's in the folders
 
 ```
 app/
-  app.py            FastAPI service: prediction, explanation, serves the web page
-  train_model.py    Data cleaning, model comparison, evaluation, saves the model
-  features.py       Feature list and risk band cut-offs shared by both
-  model.joblib      Trained model
-  metrics.json      Evaluation results
-frontend/           Web page (HTML, CSS, vanilla JS)
-data/               Pima Indians Diabetes dataset
-tests/              API tests (pytest)
-render.yaml         Config for deploying to Render
+  app.py            The API: takes the health numbers, returns the result, serves the web page
+  train_model.py    Cleans the data, compares the models, tests them, saves the model
+  features.py       The list of health numbers and the risk level cut-offs
+  model.joblib      The trained model
+  metrics.json      The test results
+frontend/           The web page
+data/               The dataset
+tests/              Automatic tests
+Dockerfile          Instructions to run the app in Docker
+render.yaml         Settings for hosting the app on Render
 ```
 
-## Limitations
+## Limits
 
-- **Not medical advice.** This is a learning project, not a validated clinical tool.
-- The dataset is small (768 people) and covers only adult women of one heritage group. The model would need retraining and validation on other populations before its numbers meant anything for them.
-- Glucose here is from a 2-hour oral glucose tolerance test, not a casual finger-prick reading.
-- Filling missing insulin and skin thickness with the median is simple. Better imputation (or dropping those features) is worth testing.
+- **This is not medical advice.** It's a learning project, not a tested medical tool.
+- The dataset is small (768 people) and only includes adult women from one group. The results may not apply to anyone else.
+- The glucose number comes from a 2-hour hospital glucose test, not a quick finger-prick test. That test is already close to how diabetes is diagnosed, so a stronger version of this app would use numbers people can give without a lab (see below).
+- Filling missing values with a typical value is simple. Smarter ways might do better.
 
-## Next steps
+## What I'd do next
 
-- Calibrate the probabilities and check calibration on the test set.
-- Try gradient boosting and SHAP explanations, and compare with the logistic regression baseline.
-- Deploy a public demo (Render config is included).
+- Rebuild it with a bigger survey dataset that only uses things people know without a lab test, so it works as a real early check.
+- Check that a "30% chance" really means about 30 out of 100 people.
+- Try a stronger model and compare it fairly with this simple one.
 
 ## About
 
-Built by Liong Kah Yee to learn the full path from a dataset to a working ML product: data cleaning, model selection, honest evaluation, serving a model through an API, and a usable front end. The idea was inspired by another creator's project; this version is built from scratch.
+Built by Liong Kah Yee to learn the full journey from a dataset to a working product: cleaning data, choosing a model, testing it honestly, putting it behind an API, and making a page people can use. The idea was inspired by another creator's project; this version is built from scratch.
