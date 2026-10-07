@@ -2,7 +2,7 @@
 
 [![Tests](https://github.com/kahyeeliong/health-risk-predictor/actions/workflows/tests.yml/badge.svg)](https://github.com/kahyeeliong/health-risk-predictor/actions/workflows/tests.yml)
 
-**Try it live: LIVE_URL**
+**Try it live: https://health-risk-predictor-kyom.onrender.com** (free hosting, so the first visit can take up to a minute to wake up)
 
 A web app that guesses how likely someone is to have diabetes, based on 8 simple health numbers (like glucose, BMI and age). It also shows *which* numbers pushed the risk up or down, so the result isn't a black box.
 
